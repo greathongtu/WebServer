@@ -56,15 +56,16 @@ int main( int argc, char* argv[] ) {
 
     int listenfd = socket( PF_INET, SOCK_STREAM, 0 );
 
+    // 端口复用
+    int reuse = 1;
+    setsockopt( listenfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof( reuse ) );
+
+    // 绑定
     int ret = 0;
     struct sockaddr_in address;
     address.sin_addr.s_addr = INADDR_ANY;
     address.sin_family = AF_INET;
     address.sin_port = htons( port );
-
-    // 端口复用
-    int reuse = 1;
-    setsockopt( listenfd, SOL_SOCKET, SO_REUSEADDR, &reuse, sizeof( reuse ) );
     ret = bind( listenfd, ( struct sockaddr* )&address, sizeof( address ) );
     ret = listen( listenfd, 5 );
 
@@ -75,8 +76,7 @@ int main( int argc, char* argv[] ) {
     addfd(epollfd, listenfd, false);
     http_conn::m_epollfd = epollfd;
 
-    while(1) {
-        
+    while(true) {
         int number = epoll_wait(epollfd, events, MAX_EVENT_NUMBER, -1);
 
         // 在阻塞的这段时间里，进程可能会收到内核的一些信号，这些信号优先级高，需要优先处理的，不能等这些调用完成后才处理信号。
